@@ -11,7 +11,7 @@
 | Campo | Preenchimento |
 |-------|---------------|
 | Nome do projeto | Syncora |
-| Repositório GitHub | |
+| Repositório GitHub | https://github.com/Pozo1/syncora |
 | Integrante 1 | Rodrigo Pozo Griecco — 38707616 |
 | Integrante 2 | Gabriel Nascimento De Carlo — 40259927 |
 | Integrante 3 *(se houver)* | Nome — RA |
