@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syncora - Match!</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        body { background: #0d0d0d; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        
+        .phone { 
+            width: 360px; height: 740px; background: #121212; border-radius: 40px; 
+            border: 10px solid #2b2b2b; overflow: hidden; position: relative; color: white;
+        }
+
+        .match-photo { width: 100%; height: 60%; object-fit: cover; }
+        
+        .content { 
+            position: absolute; bottom: 0; width: 100%; height: 50%;
+            background: linear-gradient(transparent, #121212 20%);
+            padding: 30px; display: flex; flex-direction: column;
+        }
+
+        .compatibility-tag { 
+            background: #1db954; color: white; padding: 5px 12px; 
+            border-radius: 20px; font-size: 12px; font-weight: bold; align-self: flex-start;
+        }
+
+        h1 { font-size: 32px; margin: 10px 0; }
+        .details { color: #b3b3b3; font-size: 16px; margin-bottom: 20px; }
+        .music-match { background: #1c1c1c; padding: 15px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; }
+
+        .actions { display: flex; gap: 15px; }
+        .btn { 
+            flex: 1; padding: 18px; border-radius: 20px; border: none; 
+            font-weight: bold; cursor: pointer; transition: 0.3s; text-decoration: none; text-align: center;
+        }
+        .btn-ignore { background: #2a2a2a; color: white; }
+        .btn-chat { background: #1db954; color: white; }
+    </style>
+</head>
+<body>
+    <div class="phone">
+        <img src="{{ match.photo }}" class="match-photo">
+        
+        <div class="content">
+            <div class="compatibility-tag">{{ match.compatibility }}% Compatível</div>
+            <h1>{{ match.name }}</h1>
+            <p class="details">A {{ match.distance }} de você</p>
+
+            <div class="music-match">
+                <p style="font-size: 12px; color: #1db954; margin-bottom: 5px;">SINTONIA ATUAL:</p>
+                <p><strong>{{ match.music }}</strong></p>
+            </div>
+
+            <div class="actions">
+                <a href="/sync" class="btn btn-ignore">Próxima</a>
+                <a href="/chat" class="btn btn-chat">Enviar Oi</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: white; padding: 40px; text-align: center;">
+    
+    <div class="radar-scan">
+        <div class="dot"></div>
+    </div>
+
+    <h2 style="font-size: 24px; font-weight: 900; margin-top: 40px;">Sincronizando...</h2>
+    <p style="color: #888; font-size: 15px; margin-top: 10px; line-height: 1.5;">
+        Estamos calibrando o seu radar musical e localizando conexões próximas.
+    </p>
+
+    <div id="status-msg" style="margin-top: 30px; font-size: 12px; color: #1db954; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7;">
+        Solicitando acesso ao GPS...
+    </div>
+</div>
+
+<script>
+    // Função para capturar a localização real do usuário
+    window.onload = function() {
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                
+                document.getElementById('status-msg').innerText = "Gerando raio de conexão...";
+
+                // Envia as coordenadas para o backend (app.py) para popular os bots ao redor
+                fetch('/save_location', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lat: lat, lon: lon })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Após salvar a localização e gerar os bots, segue para o Setup de Perfil
+                    setTimeout(() => {
+                        window.location.href = '/setup';
+                    }, 2000);
+                });
+            }, function(error) {
+                alert("Para o Syncora funcionar, precisamos da sua localização para o raio de match.");
+                window.location.href = '/';
+            });
+        } else {
+            alert("Geolocalização não suportada no seu navegador.");
+        }
+    };
+</script>
+
+<style>
+    .radar-scan {
+        width: 120px;
+        height: 120px;
+        border: 2px solid #1db954;
+        border-radius: 50%;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(29, 185, 84, 0.1);
+    }
+    
+    .radar-scan::before {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border: 1px solid #1db954;
+        border-radius: 50%;
+        animation: pulse-radar 2s linear infinite;
+    }
+
+    .dot {
+        width: 12px;
+        height: 12px;
+        background: #1db954;
+        border-radius: 50%;
+        box-shadow: 0 0 15px #1db954;
+    }
+
+    @keyframes pulse-radar {
+        0% { transform: scale(1); opacity: 1; }
+        100% { transform: scale(1.8); opacity: 0; }
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}

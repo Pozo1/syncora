@@ -1,0 +1,16 @@
+{
+  "directed": false,
+  "vertices": [
+    "user:ana",
+    "user:bruno",
+    "user:carla",
+    "music:blinding_lights",
+    "music:levitating"
+  ],
+  "edges": [
+    ["user:ana", "music:blinding_lights"],
+    ["user:bruno", "music:blinding_lights"],
+    ["user:carla", "music:levitating"]
+  ]
+}
+

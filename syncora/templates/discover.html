@@ -1,0 +1,712 @@
+{% extends "base.html" %}
+{% block content %}
+<div id="syncora-app" style="height: 100%; width: 100%; position: relative; color: white; font-family: 'Montserrat', sans-serif; overflow: hidden; background-color: #050505;">
+
+    <div class="aurora-blob blob-1"></div>
+    <div class="aurora-blob blob-2"></div>
+    <div class="aurora-noise"></div>
+
+    <div class="app-header">
+        <div class="header-top">
+            <div class="user-mini-profile">
+                <img src="{{ user_photo }}" alt="Você">
+                <div class="user-loc">
+                    <span class="loc-title">Radar Ativo em</span>
+                    <span class="loc-city"><i class="fa-solid fa-location-dot"></i> Mogi das Cruzes</span>
+                </div>
+            </div>
+            <button class="icon-btn-glass"><i class="fa-solid fa-sliders"></i></button>
+        </div>
+
+        <div class="segmented-control">
+            <div id="segment-highlighter" class="highlighter"></div>
+            <button class="segment-btn active" onclick="switchView('galaxy', this)">Vibe Orbit</button>
+            <button class="segment-btn" onclick="switchView('cards', this)">Flow Cards</button>
+        </div>
+
+        <div class="vibe-scroll-area">
+            <div class="vibe-chip active" onclick="applyFilter('Tudo', this)">Tudo</div>
+            <div class="vibe-chip" onclick="applyFilter('Automotiva', this)"><i class="fa-solid fa-car-side"></i> Phonk / Drift</div>
+            <div class="vibe-chip" onclick="applyFilter('Foco', this)"><i class="fa-solid fa-laptop-code"></i> Foco / Code</div>
+            <div class="vibe-chip" onclick="applyFilter('Festas', this)"><i class="fa-solid fa-martini-glass"></i> Sextou</div>
+        </div>
+    </div>
+
+    <div id="galaxy-view" class="main-view active-view">
+        <canvas id="orbit-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none;"></canvas>
+        
+        <div class="radar-circle rc-1"></div>
+        <div class="radar-circle rc-2"></div>
+        <div class="radar-scanner-cone"></div>
+
+        <div id="orbit-core" class="orbit-core">
+            <div class="core-energy"></div>
+            <img src="{{ user_photo }}" class="core-img">
+            <div id="core-point" style="position: absolute; top: 50%; left: 50%; width: 1px; height: 1px;"></div>
+        </div>
+
+        <div id="particle-container" style="position: absolute; width: 100%; height: 100%; z-index: 20;">
+            {% for bot in potential_matches %}
+            <div class="orbit-node filter-item" data-genre="{% if loop.index % 2 == 0 %}Automotiva{% elif loop.index % 3 == 0 %}Foco{% else %}Festas{% endif %}" data-name="{{ bot.name }}" data-photo="{{ bot.photo }}" data-radius="{{ 140 + (loop.index * 45) }}" style="top: 50%; left: 50%;">
+                <div class="node-point" style="position: absolute; top: 50%; left: 50%;"></div>
+                
+                <div class="node-avatar">
+                    <img src="{{ bot.photo }}">
+                    <div class="node-ring"></div>
+                </div>
+
+                <div class="node-info">
+                    <span class="n-name">{{ bot.name }}</span>
+                    <div class="n-music">
+                        <div class="music-wave"><span></span><span></span><span></span></div>
+                        <span class="m-title">{{ bot.music | truncate(15) }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div id="cards-view" class="main-view hidden-view">
+        <div class="swipe-container" id="swipe-container">
+            {% for bot in potential_matches %}
+            <div class="swipe-card filter-item" data-genre="{% if loop.index % 2 == 0 %}Automotiva{% elif loop.index % 3 == 0 %}Foco{% else %}Festas{% endif %}" data-name="{{ bot.name }}" data-photo="{{ bot.photo }}">
+                
+                <div class="s-card-image" style="background-image: url('{{ bot.photo }}');">
+                    <div class="s-card-gradient"></div>
+                    
+                    <div class="action-stamp stamp-nope">PASSO</div>
+                    <div class="action-stamp stamp-sync">SYNC</div>
+
+                    <div class="s-distance-badge"><div class="live-dot"></div>{{ bot.distance }}</div>
+
+                    <div class="s-card-content">
+                        <h2 class="s-name">{{ bot.name }}, {{ bot.age }}</h2>
+                        
+                        <div class="s-now-playing">
+                            <i class="fa-solid fa-headphones" style="color: #1db954;"></i>
+                            <span class="s-music-name">{{ bot.music }}</span>
+                        </div>
+                        
+                        <p class="s-bio">"{{ bot.bio }}"</p>
+                    </div>
+                </div>
+
+                <div class="s-button-dock">
+                    <button class="s-btn btn-close" onclick="forceSwipe(this, 'left')"><i class="fa-solid fa-xmark"></i></button>
+                    <button class="s-btn btn-super" onclick="forceSwipe(this, 'right')"><i class="fa-solid fa-bolt"></i></button>
+                </div>
+            </div>
+            {% endfor %}
+
+            <div class="empty-cards">
+                <div class="radar-scan-empty"></div>
+                <h3>Buscando novas sintonias...</h3>
+            </div>
+        </div>
+    </div>
+
+    <div id="ultra-sync-modal" class="ultra-sync-modal">
+        <canvas id="supernova-canvas" class="supernova-canvas"></canvas>
+        
+        <h1 class="sync-title">SINTONIA<br><span style="color: #1db954;">ESTABELECIDA</span></h1>
+        
+        <div class="sync-avatars">
+            <div class="sync-img-box img-left"><img src="{{ user_photo }}"></div>
+            <div class="sync-energy-ball"><i class="fa-solid fa-bolt"></i></div>
+            <div class="sync-img-box img-right"><img id="sync-target-img" src=""></div>
+        </div>
+
+        <h2 id="sync-target-name" class="sync-subtitle">Você e Nome</h2>
+        
+        <div class="sync-actions">
+            <button class="btn-primary" onclick="window.location.href='/chat'">Mandar Mensagem</button>
+            <button class="btn-secondary" onclick="closeMatch()">Continuar Explorando</button>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    /* Reset local para blindar o app */
+    #syncora-app * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    
+    /* AURORA BACKGROUND */
+    .aurora-blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.6; animation: floatBlob 10s infinite alternate cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; }
+    .blob-1 { width: 300px; height: 300px; background: rgba(29, 185, 84, 0.3); top: -100px; left: -100px; }
+    .blob-2 { width: 400px; height: 400px; background: rgba(10, 80, 50, 0.2); bottom: -150px; right: -100px; animation-delay: -5s; }
+    .aurora-noise { position: absolute; inset: 0; background: url('https://grainy-gradients.vercel.app/noise.svg'); opacity: 0.2; mix-blend-mode: overlay; pointer-events: none; }
+
+    @keyframes floatBlob { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(50px, 50px) scale(1.2); } }
+
+    /* HEADER PREMIUM */
+    .app-header { position: absolute; top: 0; left: 0; width: 100%; padding: 25px 20px 10px 20px; z-index: 1000; background: linear-gradient(to bottom, rgba(5,5,5,0.9) 30%, transparent); display: flex; flex-direction: column; gap: 20px; }
+    .header-top { display: flex; justify-content: space-between; align-items: center; }
+    .user-mini-profile { display: flex; align-items: center; gap: 12px; }
+    .user-mini-profile img { width: 45px; height: 45px; border-radius: 50%; border: 2px solid #1db954; object-fit: cover; box-shadow: 0 5px 15px rgba(29,185,84,0.3); }
+    .user-loc { display: flex; flex-direction: column; gap: 2px; }
+    .loc-title { font-size: 10px; color: #888; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+    .loc-city { font-size: 13px; color: white; font-weight: 800; display: flex; align-items: center; gap: 5px; }
+    .loc-city i { color: #1db954; font-size: 12px; }
+    
+    .icon-btn-glass { width: 45px; height: 45px; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 18px; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(10px); cursor: pointer; transition: 0.2s; }
+    .icon-btn-glass:active { transform: scale(0.9); }
+
+    /* SEGMENTED CONTROL (O Toggle Perfeito) */
+    .segmented-control { position: relative; display: flex; background: rgba(255,255,255,0.05); padding: 5px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(15px); }
+    .highlighter { position: absolute; top: 5px; left: 5px; width: calc(50% - 5px); height: calc(100% - 10px); background: linear-gradient(135deg, #1db954, #1ed760); border-radius: 25px; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 5px 15px rgba(29,185,84,0.3); }
+    .segment-btn { flex: 1; padding: 12px 0; border: none; background: transparent; color: white; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; z-index: 2; cursor: pointer; transition: 0.3s; }
+    .segment-btn:not(.active) { color: #888; }
+
+    /* VIBE FILTERS SCROLL */
+    .vibe-scroll-area { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .vibe-scroll-area::-webkit-scrollbar { display: none; }
+    .vibe-chip { padding: 10px 16px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; font-size: 11px; font-weight: 700; color: #aaa; white-space: nowrap; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.3s; backdrop-filter: blur(10px); }
+    .vibe-chip.active { background: #1db954; color: black; border-color: #1db954; font-weight: 900; box-shadow: 0 5px 15px rgba(29,185,84,0.3); }
+
+    /* CONTROLE DE TELAS PRINCIPAIS */
+    .main-view { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transition: opacity 0.4s ease, transform 0.4s ease; }
+    .hidden-view { opacity: 0; pointer-events: none; transform: scale(0.95); z-index: 0; }
+    .active-view { opacity: 1; pointer-events: auto; transform: scale(1); z-index: 10; }
+    
+    /* Classe para esconder nós filtrados suavemente */
+    .filtered-out { opacity: 0 !important; pointer-events: none !important; transform: scale(0) !important; }
+
+    /* ================= GALAXY ORBIT VISUALS ================= */
+    .radar-circle { position: absolute; border: 1px solid rgba(29,185,84,0.15); border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: inset 0 0 30px rgba(29,185,84,0.05); }
+    .rc-1 { width: 280px; height: 280px; }
+    .rc-2 { width: 480px; height: 480px; }
+    .radar-scanner-cone { position: absolute; top: 50%; left: 50%; width: 600px; height: 600px; margin: -300px 0 0 -300px; background: conic-gradient(from 0deg, transparent 70%, rgba(29, 185, 84, 0.15) 90%, rgba(29, 185, 84, 0.6) 100%); border-radius: 50%; animation: scan 4s linear infinite; pointer-events: none; }
+    @keyframes scan { to { transform: rotate(360deg); } }
+
+    .orbit-core { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100px; height: 100px; z-index: 30; display: flex; align-items: center; justify-content: center; }
+    .core-energy { position: absolute; width: 130px; height: 130px; background: radial-gradient(circle, rgba(29,185,84,0.4) 0%, transparent 70%); border-radius: 50%; animation: pulse 2s infinite alternate; }
+    .core-img { width: 85px; height: 85px; border-radius: 50%; border: 4px solid #1db954; object-fit: cover; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 2; }
+    @keyframes pulse { from { transform: scale(0.9); opacity: 0.6; } to { transform: scale(1.2); opacity: 1; } }
+
+    /* Nódulos do Radar */
+    .orbit-node { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 8px; transition: transform 0.1s linear, opacity 0.4s ease; cursor: grab; touch-action: none; }
+    .orbit-node:active { cursor: grabbing; }
+    .node-avatar { width: 55px; height: 55px; position: relative; border-radius: 50%; background: #000; box-shadow: 0 10px 20px rgba(0,0,0,0.8); transition: 0.3s; }
+    .node-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; pointer-events: none; }
+    .node-ring { position: absolute; inset: -3px; border: 2px solid rgba(255,255,255,0.2); border-radius: 50%; pointer-events: none; transition: 0.3s; }
+    
+    .node-info { background: rgba(10,10,10,0.8); backdrop-filter: blur(10px); padding: 6px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center; display: flex; flex-direction: column; pointer-events: none; transition: 0.3s; width: max-content; box-shadow: 0 5px 15px rgba(0,0,0,0.6); }
+    .n-name { font-size: 11px; font-weight: 900; color: white; margin-bottom: 2px; }
+    .n-music { display: flex; align-items: center; gap: 5px; }
+    .m-title { font-size: 9px; font-weight: 800; color: #1db954; }
+    .music-wave { display: flex; align-items: flex-end; gap: 2px; height: 8px; }
+    .music-wave span { width: 2px; background: #1db954; border-radius: 1px; animation: eq 0.6s infinite alternate; }
+    .music-wave span:nth-child(2) { animation-delay: 0.2s; }
+    .music-wave span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes eq { 0% { height: 3px; } 100% { height: 8px; } }
+
+    /* Estado de Arrastar (Drag) */
+    .node-dragging { z-index: 100 !important; }
+    .node-dragging .node-avatar { transform: scale(1.4); }
+    .node-dragging .node-ring { border-color: #1db954; box-shadow: 0 0 25px rgba(29,185,84,0.6); transform: scale(1.1); }
+    .node-dragging .node-info { opacity: 0; transform: translateY(10px); }
+
+    /* ================= FLOW CARDS VISUALS ================= */
+    .swipe-container { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; padding-top: 50px; }
+    .swipe-card { position: absolute; width: 330px; height: 600px; background: #111; border-radius: 35px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.05); will-change: transform; transform-origin: 50% 100%; transition: opacity 0.4s ease; touch-action: none; }
+    
+    /* Efeito de Pilha de Cartas */
+    .swipe-card:nth-last-child(1) { z-index: 10; transform: translateY(0) scale(1); }
+    .swipe-card:nth-last-child(2) { z-index: 9; transform: translateY(15px) scale(0.95); opacity: 0.8; }
+    .swipe-card:nth-last-child(3) { z-index: 8; transform: translateY(30px) scale(0.9); opacity: 0.5; }
+    
+    .s-card-image { flex: 1; background-size: cover; background-position: center; position: relative; overflow: hidden; }
+    .s-card-gradient { position: absolute; bottom: 0; width: 100%; height: 70%; background: linear-gradient(to top, #111 5%, transparent 100%); pointer-events: none; }
+    
+    .action-stamp { position: absolute; top: 50px; padding: 8px 20px; border: 4px solid; border-radius: 15px; font-size: 38px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; opacity: 0; pointer-events: none; z-index: 10; }
+    .stamp-nope { right: 30px; color: #ff4b4b; border-color: #ff4b4b; transform: rotate(15deg); box-shadow: 0 0 20px rgba(255,75,75,0.3), inset 0 0 20px rgba(255,75,75,0.3); }
+    .stamp-sync { left: 30px; color: #1db954; border-color: #1db954; transform: rotate(-15deg); box-shadow: 0 0 20px rgba(29,185,84,0.3), inset 0 0 20px rgba(29,185,84,0.3); }
+
+    .s-distance-badge { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); padding: 8px 14px; border-radius: 20px; font-size: 12px; font-weight: 800; display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.1); }
+    .live-dot { width: 8px; height: 8px; background: #1db954; border-radius: 50%; box-shadow: 0 0 10px #1db954; animation: blink 1.5s infinite; }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    .s-card-content { position: absolute; bottom: 20px; left: 20px; right: 20px; z-index: 5; pointer-events: none; }
+    .s-name { font-size: 32px; font-weight: 900; margin: 0; letter-spacing: -1px; text-shadow: 0 4px 15px rgba(0,0,0,0.8); }
+    .s-now-playing { display: flex; align-items: center; gap: 10px; margin: 8px 0; background: rgba(29,185,84,0.2); padding: 6px 14px; border-radius: 15px; border: 1px solid rgba(29,185,84,0.3); backdrop-filter: blur(10px); width: fit-content; }
+    .s-music-name { font-size: 13px; font-weight: 800; color: #1db954; }
+    .s-bio { font-size: 14px; color: #ccc; line-height: 1.5; font-weight: 500; margin-top: 10px; }
+
+    .s-button-dock { height: 100px; background: #111; display: flex; justify-content: center; align-items: center; gap: 30px; border-top: 1px solid rgba(255,255,255,0.05); }
+    .s-btn { width: 65px; height: 65px; border-radius: 50%; border: none; display: flex; justify-content: center; align-items: center; font-size: 26px; cursor: pointer; transition: 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .s-btn:active { transform: scale(0.85); }
+    .btn-close { background: #222; color: #ff4b4b; border: 1px solid #ff4b4b; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+    .btn-super { background: #1db954; color: black; font-size: 32px; width: 75px; height: 75px; box-shadow: 0 15px 30px rgba(29,185,84,0.4); }
+
+    .empty-cards { position: absolute; width: 330px; height: 600px; border-radius: 35px; border: 2px dashed rgba(255,255,255,0.1); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: #888; z-index: 1; }
+    .radar-scan-empty { width: 80px; height: 80px; border: 2px solid #1db954; border-radius: 50%; border-top-color: transparent; animation: scan 1s linear infinite; margin-bottom: 20px; }
+
+    /* ================= ULTRA SYNC MODAL ================= */
+    .ultra-sync-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
+    .ultra-sync-modal.active { opacity: 1; pointer-events: auto; }
+    
+    .supernova-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+    
+    .sync-title { font-size: 42px; font-weight: 900; line-height: 1.1; text-align: center; z-index: 10; margin-bottom: 50px; text-shadow: 0 10px 30px rgba(29,185,84,0.4); }
+    .sync-avatars { display: flex; align-items: center; justify-content: center; position: relative; z-index: 10; }
+    .sync-img-box { width: 150px; height: 150px; border-radius: 50%; padding: 5px; background: linear-gradient(135deg, #1db954, transparent); box-shadow: 0 20px 50px rgba(0,0,0,0.8); position: relative; }
+    .sync-img-box img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid #050505; }
+    
+    .img-left { transform: translateX(25px); z-index: 2; animation: smashL 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .img-right { transform: translateX(-25px); z-index: 1; animation: smashR 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .sync-energy-ball { position: absolute; z-index: 10; width: 60px; height: 60px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; color: #1db954; box-shadow: 0 0 40px #fff, 0 0 80px #1db954; animation: popBall 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    
+    .sync-subtitle { z-index: 10; margin-top: 40px; font-size: 26px; font-weight: 800; }
+    
+    .sync-actions { z-index: 10; width: 100%; padding: 0 35px; margin-top: 50px; display: flex; flex-direction: column; gap: 15px; }
+    .btn-primary { width: 100%; padding: 22px; border-radius: 50px; background: #1db954; color: black; font-weight: 900; font-size: 16px; text-transform: uppercase; border: none; box-shadow: 0 10px 30px rgba(29, 185, 84, 0.3); cursor: pointer; transition: 0.3s; }
+    .btn-primary:active { transform: scale(0.95); }
+    .btn-secondary { width: 100%; padding: 20px; border-radius: 50px; background: transparent; color: #aaa; font-weight: 800; font-size: 13px; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; }
+
+    @keyframes smashL { 0% { transform: translateX(-150px) scale(0.5); opacity: 0; } 100% { transform: translateX(25px) scale(1); opacity: 1; } }
+    @keyframes smashR { 0% { transform: translateX(150px) scale(0.5); opacity: 0; } 100% { transform: translateX(-25px) scale(1); opacity: 1; } }
+    @keyframes popBall { 0% { transform: scale(0); opacity: 0; } 80% { transform: scale(1.4); opacity: 1; } 100% { transform: scale(1); } }
+    
+    .shake-fx { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+    @keyframes shake { 10%, 90% { transform: translate3d(-2px, 2px, 0); } 20%, 80% { transform: translate3d(4px, -2px, 0); } 30%, 50%, 70% { transform: translate3d(-6px, 4px, 0); } 40%, 60% { transform: translate3d(6px, -4px, 0); } }
+</style>
+
+<script>
+    // ESTADO GLOBAL DO APP
+    let currentMode = 'galaxy';
+    let orbitReqId;
+    let swipeManagerInstance;
+
+    // HAPTIC FEEDBACK
+    function haptic(type = 'light') {
+        if (!navigator.vibrate) return;
+        if (type === 'light') navigator.vibrate(15);
+        if (type === 'heavy') navigator.vibrate([40, 30, 40]);
+        if (type === 'match') navigator.vibrate([50, 50, 150]);
+    }
+
+    // =======================================================
+    // CONTROLADOR DE TELAS E FILTROS (O BUG FIX PRINCIPAL)
+    // =======================================================
+    function switchView(mode, btn) {
+        if (currentMode === mode) return;
+        haptic('light');
+        
+        // UI do Segmented Control
+        document.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const highlighter = document.getElementById('segment-highlighter');
+        highlighter.style.transform = mode === 'galaxy' ? 'translateX(0)' : 'translateX(100%)';
+
+        const viewGalaxy = document.getElementById('galaxy-view');
+        const viewCards = document.getElementById('cards-view');
+
+        currentMode = mode;
+
+        if (mode === 'galaxy') {
+            // Mostra Galaxy, Esconde Cards
+            viewCards.classList.remove('active-view');
+            viewCards.classList.add('hidden-view');
+            setTimeout(() => {
+                viewGalaxy.classList.remove('hidden-view');
+                viewGalaxy.classList.add('active-view');
+                // IMPORTANTE: Só reinicia a animação quando a tela estiver visível
+                if(!orbitReqId) animateOrbit();
+            }, 300);
+        } else {
+            // Mostra Cards, Esconde Galaxy
+            viewGalaxy.classList.remove('active-view');
+            viewGalaxy.classList.add('hidden-view');
+            
+            // IMPORTANTE: Para a animação do Canvas imediatamente para evitar o erro de NaN
+            cancelAnimationFrame(orbitReqId);
+            orbitReqId = null;
+
+            setTimeout(() => {
+                viewCards.classList.remove('hidden-view');
+                viewCards.classList.add('active-view');
+                if(!swipeManagerInstance) swipeManagerInstance = new SwipeEngine();
+                swipeManagerInstance.init(); // Recarrega os eventos dos cards
+            }, 300);
+        }
+    }
+
+    function applyFilter(genre, btn) {
+        haptic('light');
+        // UI do Filtro
+        document.querySelectorAll('.vibe-chip').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Lógica de Filtragem Universal (CSS Resolve)
+        const items = document.querySelectorAll('.filter-item');
+        items.forEach(item => {
+            if (genre === 'Tudo' || item.getAttribute('data-genre') === genre) {
+                item.classList.remove('filtered-out');
+            } else {
+                item.classList.add('filtered-out');
+            }
+        });
+
+        // Se estiver na tela de cards, reinicia o SwipeEngine para limpar cartas escondidas
+        if(currentMode === 'cards' && swipeManagerInstance) {
+            swipeManagerInstance.init();
+        }
+    }
+
+    // =======================================================
+    // MOTOR GRÁFICO 1: GALAXY ORBIT & CONSTELAÇÃO (ROBUSTO)
+    // =======================================================
+    const orbitCanvas = document.getElementById('orbit-canvas');
+    const ctx = orbitCanvas.getContext('2d');
+    let orbitAngle = 0;
+
+    function resizeOrbitCanvas() {
+        if(currentMode !== 'galaxy') return; // Evita erro se a tela não estiver visível
+        orbitCanvas.width = orbitCanvas.parentElement.offsetWidth;
+        orbitCanvas.height = orbitCanvas.parentElement.offsetHeight;
+    }
+    window.addEventListener('resize', resizeOrbitCanvas);
+    // Timeout garante que o CSS renderizou a tela
+    setTimeout(resizeOrbitCanvas, 100); 
+
+    function drawConnections() {
+        // Limpa o frame
+        ctx.clearRect(0, 0, orbitCanvas.width, orbitCanvas.height);
+        
+        const corePoint = document.getElementById('core-point');
+        if(!corePoint) return;
+        const appRect = document.getElementById('galaxy-view').getBoundingClientRect();
+        const coreRect = corePoint.getBoundingClientRect();
+        
+        // Posição central segura
+        const coreX = coreRect.left - appRect.left + (coreRect.width/2);
+        const coreY = coreRect.top - appRect.top + (coreRect.height/2);
+
+        // Somente pega nós que NÃO estão filtrados
+        const nodes = document.querySelectorAll('.orbit-node:not(.filtered-out)');
+        
+        nodes.forEach((node) => {
+            const nPoint = node.querySelector('.node-point');
+            const nRect = nPoint.getBoundingClientRect();
+            // Prevenção de erro: se getBoundingClientRect falhar (ex: display none), ignora
+            if(nRect.width === 0 && nRect.height === 0) return;
+
+            const nx = nRect.left - appRect.left + (nRect.width/2);
+            const ny = nRect.top - appRect.top + (nRect.height/2);
+
+            const dist = Math.hypot(nx - coreX, ny - coreY);
+            
+            // Desenha raio de luz
+            if (dist < 280) {
+                const alpha = 1 - (dist / 280);
+                ctx.beginPath();
+                ctx.moveTo(coreX, coreY);
+                ctx.lineTo(nx, ny);
+                let gradient = ctx.createLinearGradient(coreX, coreY, nx, ny);
+                gradient.addColorStop(0, `rgba(29, 185, 84, ${alpha})`);
+                gradient.addColorStop(1, `rgba(29, 185, 84, 0)`);
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
+        });
+    }
+
+    function animateOrbit() {
+        // Trava de segurança: se não for galaxy, aborta o frame.
+        if (currentMode !== 'galaxy') return;
+
+        orbitAngle += 0.003;
+        const nodes = document.querySelectorAll('.orbit-node:not(.filtered-out)');
+        
+        nodes.forEach((node, index) => {
+            if (!node.classList.contains('node-dragging')) {
+                const radius = parseFloat(node.getAttribute('data-radius'));
+                const offsetAngle = index * 3.14; // Distribuição na roda
+                const x = Math.cos(orbitAngle + offsetAngle) * radius;
+                const y = Math.sin(orbitAngle + offsetAngle) * radius;
+                // Translada do centro (top 50% left 50%)
+                node.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+            }
+        });
+
+        drawConnections();
+        orbitReqId = requestAnimationFrame(animateOrbit);
+    }
+
+    // LÓGICA DE DRAG AND DROP (Usando Pointer Events Universal)
+    document.querySelectorAll('.orbit-node').forEach(node => {
+        let isDragging = false;
+
+        const onPointerDown = (e) => {
+            if(currentMode !== 'galaxy' || node.classList.contains('filtered-out')) return;
+            isDragging = true;
+            node.setPointerCapture(e.pointerId);
+            node.classList.add('node-dragging');
+            haptic('light');
+        };
+
+        const onPointerMove = (e) => {
+            if (!isDragging) return;
+            // Move o nó baseado no centro da tela
+            const x = e.clientX - window.innerWidth / 2;
+            const y = e.clientY - window.innerHeight / 2;
+            node.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+
+            // Física Magnética para o Match
+            const distToCenter = Math.hypot(x, y);
+            const core = document.getElementById('orbit-core');
+            
+            if (distToCenter < 70) {
+                node.style.transform = `translate(-50%, -50%) scale(1.1)`;
+                core.style.transform = "translate(-50%, -50%) scale(1.15)";
+                if(!node.dataset.magnetized) { haptic('heavy'); node.dataset.magnetized = "true"; }
+            } else {
+                core.style.transform = "translate(-50%, -50%) scale(1)";
+                node.dataset.magnetized = "";
+            }
+        };
+
+        const onPointerUp = (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            node.releasePointerCapture(e.pointerId);
+            node.classList.remove('node-dragging');
+            document.getElementById('orbit-core').style.transform = "translate(-50%, -50%) scale(1)";
+            
+            if(node.style.transform.includes("translate(-50%, -50%) scale(1.1)")) {
+                // MATCH DISPARADO
+                node.classList.add('filtered-out'); // Tira ele da tela
+                triggerMatch(node.dataset.name, node.dataset.photo);
+            }
+        };
+
+        node.addEventListener('pointerdown', onPointerDown);
+        node.addEventListener('pointermove', onPointerMove);
+        node.addEventListener('pointerup', onPointerUp);
+        node.addEventListener('pointercancel', onPointerUp);
+    });
+
+    // Inicia a Órbita
+    animateOrbit();
+
+
+    // =======================================================
+    // MOTOR GRÁFICO 2: SWIPE CARDS (TINDER PHYSICS)
+    // =======================================================
+    class SwipeEngine {
+        constructor() {
+            this.container = document.getElementById('swipe-container');
+            this.activeCard = null;
+            this.startX = 0;
+            this.startY = 0;
+            this.currentX = 0;
+            this.currentY = 0;
+            this.isDragging = false;
+            
+            // Bind methods context
+            this.onPointerDown = this.onPointerDown.bind(this);
+            this.onPointerMove = this.onPointerMove.bind(this);
+            this.onPointerUp = this.onPointerUp.bind(this);
+        }
+
+        init() {
+            // Pega apenas as cartas que não foram rejeitadas/matchadas e não estão filtradas
+            const cards = Array.from(document.querySelectorAll('.swipe-card:not(.filtered-out)'));
+            
+            if (cards.length === 0) {
+                this.activeCard = null;
+                return;
+            }
+
+            // O Card ativo é sempre o último renderizado no DOM (z-index maior)
+            this.activeCard = cards[cards.length - 1];
+            
+            // Remove listeners antigos se houver e limpa styles
+            this.activeCard.style.transform = '';
+            this.activeCard.style.transition = '';
+            this.activeCard.removeEventListener('pointerdown', this.onPointerDown);
+            
+            // Atribui novo listener apenas na carta do topo
+            this.activeCard.addEventListener('pointerdown', this.onPointerDown);
+        }
+
+        onPointerDown(e) {
+            // Ignora se clicou nos botões do dock inferior
+            if(e.target.closest('.s-button-dock')) return;
+
+            this.isDragging = true;
+            this.startX = e.clientX;
+            this.startY = e.clientY;
+            
+            this.activeCard.setPointerCapture(e.pointerId);
+            this.activeCard.style.transition = 'none'; // Tira animação para seguir o dedo rápido
+        }
+
+        onPointerMove(e) {
+            if (!this.isDragging) return;
+            
+            this.currentX = e.clientX - this.startX;
+            this.currentY = e.clientY - this.startY;
+
+            // Rotação leve baseada no X
+            const rotate = this.currentX * 0.05;
+            this.activeCard.style.transform = `translate(${this.currentX}px, ${this.currentY}px) rotate(${rotate}deg)`;
+
+            // Opacidade dos carimbos (SYNC verde / NOPE vermelho)
+            const stampSync = this.activeCard.querySelector('.stamp-sync');
+            const stampNope = this.activeCard.querySelector('.stamp-nope');
+            
+            if (this.currentX > 0) {
+                stampSync.style.opacity = this.currentX / 100;
+                stampNope.style.opacity = 0;
+            } else {
+                stampNope.style.opacity = Math.abs(this.currentX) / 100;
+                stampSync.style.opacity = 0;
+            }
+        }
+
+        onPointerUp(e) {
+            if (!this.isDragging) return;
+            this.isDragging = false;
+            this.activeCard.releasePointerCapture(e.pointerId);
+            this.activeCard.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s';
+
+            const threshold = 100; // Distância para ativar a decisão
+
+            if (this.currentX > threshold) {
+                this.executeAction('right'); // SUCESSO
+            } else if (this.currentX < -threshold) {
+                this.executeAction('left');  // REJEIÇÃO
+            } else {
+                // CANCELA E VOLTA PRO CENTRO
+                this.activeCard.style.transform = '';
+                this.activeCard.querySelector('.stamp-sync').style.opacity = 0;
+                this.activeCard.querySelector('.stamp-nope').style.opacity = 0;
+            }
+        }
+
+        executeAction(direction) {
+            if (direction === 'right') {
+                haptic('match');
+                this.activeCard.style.transform = `translate(150%, 50px) rotate(30deg)`;
+                this.activeCard.style.opacity = 0;
+                
+                const name = this.activeCard.dataset.name;
+                const photo = this.activeCard.dataset.photo;
+                setTimeout(() => { triggerMatch(name, photo); }, 200);
+
+            } else {
+                haptic('light');
+                this.activeCard.style.transform = `translate(-150%, 50px) rotate(-30deg)`;
+                this.activeCard.style.opacity = 0;
+            }
+
+            // Remove logicamente o card
+            const oldCard = this.activeCard;
+            setTimeout(() => {
+                oldCard.remove();
+            }, 400);
+
+            // Reseta state e chama o próximo card imediatamente
+            this.activeCard = null;
+            this.currentX = 0;
+            this.init();
+        }
+    }
+
+    // Funções para ativar o swipe via Botão (Dock do Card)
+    function forceSwipe(btn, direction) {
+        if(!swipeManagerInstance || !swipeManagerInstance.activeCard) return;
+        const card = swipeManagerInstance.activeCard;
+        
+        card.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s';
+        
+        if(direction === 'right') {
+            card.querySelector('.stamp-sync').style.opacity = 1;
+            swipeManagerInstance.executeAction('right');
+        } else {
+            card.querySelector('.stamp-nope').style.opacity = 1;
+            swipeManagerInstance.executeAction('left');
+        }
+    }
+
+    // Inicializa classe manager globalmente, mas roda init() só na tela de cards
+    swipeManagerInstance = new SwipeEngine();
+
+
+    // =======================================================
+    // MOTOR GRÁFICO 3: SUPERNOVA EXPLOSION (MATCH SCREEN)
+    // =======================================================
+    const sCanvas = document.getElementById('supernova-canvas');
+    const sCtx = sCanvas.getContext('2d');
+    let particles = [];
+    let sFrameId;
+
+    class Spark {
+        constructor(w, h) {
+            this.x = w / 2; this.y = h / 2;
+            this.size = Math.random() * 4 + 1;
+            const angle = Math.random() * Math.PI * 2;
+            const velocity = Math.random() * 30 + 10; // Explosão mais forte
+            this.vx = Math.cos(angle) * velocity;
+            this.vy = Math.sin(angle) * velocity;
+            this.life = 1;
+            this.decay = Math.random() * 0.02 + 0.01;
+            this.color = Math.random() > 0.3 ? '#1db954' : '#ffffff';
+        }
+        update() {
+            this.x += this.vx; this.y += this.vy; this.life -= this.decay;
+            this.vx *= 0.90; this.vy *= 0.90; // Freia a partícula (Fricção)
+        }
+        draw(ctx) {
+            ctx.globalAlpha = Math.max(0, this.life);
+            ctx.fillStyle = this.color;
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+        }
+    }
+
+    function animateSupernova() {
+        sCtx.clearRect(0, 0, sCanvas.width, sCanvas.height);
+        for (let i = 0; i < particles.length; i++) {
+            particles[i].update(); 
+            particles[i].draw(sCtx);
+            if (particles[i].life <= 0) { particles.splice(i, 1); i--; }
+        }
+        sFrameId = requestAnimationFrame(animateSupernova);
+    }
+
+    function triggerMatch(name, photo) {
+        haptic('match');
+        
+        // Tremida na tela inteira (Screen Shake DOPAMINA)
+        const app = document.getElementById('syncora-app');
+        app.classList.add('shake-fx');
+        setTimeout(() => app.classList.remove('shake-fx'), 400);
+
+        // Prepara Modal
+        const modal = document.getElementById('ultra-sync-modal');
+        document.getElementById('sync-target-img').src = photo;
+        document.getElementById('sync-target-name').innerText = `Você e ${name}`;
+        
+        modal.classList.add('active');
+
+        // Dispara Canvas (Timeout garante que o display abriu)
+        setTimeout(() => {
+            sCanvas.width = sCanvas.parentElement.offsetWidth;
+            sCanvas.height = sCanvas.parentElement.offsetHeight;
+            particles = [];
+            for (let i = 0; i < 300; i++) particles.push(new Spark(sCanvas.width, sCanvas.height));
+            cancelAnimationFrame(sFrameId);
+            animateSupernova();
+        }, 50);
+    }
+
+    function closeMatch() {
+        const modal = document.getElementById('ultra-sync-modal');
+        modal.classList.remove('active');
+        setTimeout(() => { cancelAnimationFrame(sFrameId); }, 400);
+    }
+</script>
+{% endblock %}

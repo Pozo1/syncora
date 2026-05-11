@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syncora — Music Social Club</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --spotify-green: #1db954;
+            --bg-black: #000000;
+            --card-dark: #121212;
+            --border-gray: #282828;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Montserrat', sans-serif; }
+
+        body { 
+            background: var(--bg-black); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            color: white;
+            overflow: hidden;
+        }
+
+        /* Frame do iPhone Profissional */
+        .iphone-frame { 
+            width: 375px; 
+            height: 812px; 
+            background: var(--card-dark); 
+            border-radius: 50px; 
+            border: 12px solid #1a1a1a; 
+            position: relative; 
+            display: flex; 
+            flex-direction: column;
+            box-shadow: 0 50px 100px rgba(0,0,0,0.9), 0 0 40px rgba(29, 185, 84, 0.1); 
+            overflow: hidden;
+        }
+
+        /* Notch do iPhone */
+        .iphone-frame::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 30px;
+            background: #1a1a1a;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            z-index: 1000;
+        }
+
+        .content-area { 
+            height: 100%; 
+            width: 100%; 
+            overflow-y: auto; 
+            padding-bottom: 30px;
+            scrollbar-width: none; /* Firefox */
+        }
+
+        .content-area::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+    </style>
+</head>
+<body>
+    <div class="iphone-frame">
+        <div class="content-area">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+</body>
+</html>

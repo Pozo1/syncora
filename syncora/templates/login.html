@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Syncora</title>
+
+<style>
+
+body{
+margin:0;
+background:#0d0d0d;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+font-family:Arial;
+}
+
+.phone{
+width:370px;
+height:780px;
+background:#121212;
+border-radius:45px;
+padding:25px;
+overflow:auto;
+border:10px solid #2b2b2b;
+color:white;
+}
+
+h1{
+text-align:center;
+margin-top:20px;
+font-size:38px;
+}
+
+.subtitle{
+text-align:center;
+color:#aaa;
+margin-bottom:25px;
+}
+
+input, select{
+width:100%;
+padding:16px;
+margin-top:14px;
+border:none;
+border-radius:16px;
+background:#1e1e1e;
+color:white;
+font-size:15px;
+}
+
+.upload{
+margin-top:15px;
+background:#1db954;
+padding:18px;
+text-align:center;
+border-radius:16px;
+font-weight:bold;
+}
+
+button{
+width:100%;
+padding:18px;
+margin-top:25px;
+border:none;
+border-radius:18px;
+background:#1db954;
+color:white;
+font-size:17px;
+font-weight:bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="phone">
+
+<h1>
+
+🎵 Syncora
+
+</h1>
+
+<p class="subtitle">
+
+Conecte-se através da música
+
+</p>
+
+<form action="/music" method="POST">
+
+<input type="text" name="name" placeholder="Seu nome" required>
+
+<input type="email" placeholder="Seu email" required>
+
+<input type="password" placeholder="Sua senha" required>
+
+<input type="number" name="age" placeholder="Sua idade" required>
+
+<input type="text" name="distance" placeholder="Raio de distância (km)" required>
+
+<input type="text" name="artists" placeholder="Artistas favoritos">
+
+<input type="text" name="songs" placeholder="Músicas favoritas">
+
+<select name="goal">
+
+<option>Relacionamento</option>
+<option>Amizade</option>
+<option>Conversar</option>
+
+</select>
+
+<div class="upload">
+
++ Adicionar Fotos
+
+</div>
+
+<button type="submit">
+
+Continuar
+
+</button>
+
+</form>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block content %}
+<div id="setup-master" style="padding: 25px; color: white; min-height: 100%; background: radial-gradient(circle at top right, rgba(29, 185, 84, 0.15), transparent 400px);">
+
+    <div id="step-id-verification" style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-top: 80px; animation: fadeIn 0.8s ease;">
+        <div class="identity-badge">
+            <svg width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="#1db954" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+        </div>
+        <h2 style="font-size: 32px; font-weight: 900; letter-spacing: -1.5px; margin-bottom: 12px; background: linear-gradient(to right, #fff, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Verificação</h2>
+        <p style="color: #888; font-size: 15px; line-height: 1.6; margin-bottom: 50px; padding: 0 20px; font-weight: 500;">
+            O Syncora é um clube exclusivo. <br>Valide sua identidade para prosseguir.
+        </p>
+
+        <div id="drop-zone" class="glass-card upload-zone">
+            <div id="scanner-effect"></div>
+            <div class="upload-content">
+                <span class="icon-plus">+</span>
+                <span id="upload-label">Escanear RG / CNH</span>
+            </div>
+            <input type="file" accept="image/*" class="hidden-input" onchange="processID(this)">
+        </div>
+        <div id="ia-status-container" style="display: none; margin-top: 30px;">
+            <div class="pulse-loader"></div>
+            <p style="font-size: 11px; color: #1db954; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; margin-top: 15px;">IA: Validando Documento</p>
+        </div>
+    </div>
+
+    <div id="step-profile-edit" style="display: none;">
+        <header style="margin-bottom: 35px; margin-top: 10px;">
+            <h2 style="font-size: 34px; font-weight: 900; color: #fff; letter-spacing: -1.5px; margin-bottom: 5px;">Seu Perfil</h2>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 8px; height: 8px; background: #1db954; border-radius: 50%; box-shadow: 0 0 10px #1db954;"></span>
+                <span style="color: #1db954; font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Identidade Confirmada</span>
+            </div>
+        </header>
+
+        <form action="/save_profile" method="POST">
+            <div class="photo-grid">
+                <div class="photo-card main-slot glass-card" id="card-p1">
+                    <span class="plus-btn">+</span>
+                    <input type="file" name="p1" accept="image/*" onchange="imgPreview(this)">
+                    <img src="" class="preview-img">
+                </div>
+                <div class="photo-card glass-card">
+                    <span class="plus-btn">+</span>
+                    <input type="file" name="p2" accept="image/*" onchange="imgPreview(this)">
+                    <img src="" class="preview-img">
+                </div>
+                <div class="photo-card glass-card">
+                    <span class="plus-btn">+</span>
+                    <input type="file" name="p3" accept="image/*" onchange="imgPreview(this)">
+                    <img src="" class="preview-img">
+                </div>
+                <div class="photo-card glass-card">
+                    <span class="plus-btn">+</span>
+                    <input type="file" name="p4" accept="image/*" onchange="imgPreview(this)">
+                    <img src="" class="preview-img">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <div style="flex: 0.4;">
+                    <label class="field-tag">Idade</label>
+                    <input type="number" name="age" required class="glass-input" placeholder="21">
+                </div>
+                <div style="flex: 1;">
+                    <label class="field-tag">Música Favorita</label>
+                    <input type="text" name="fav_music" placeholder="Track Name" class="glass-input">
+                </div>
+            </div>
+
+            <label class="field-tag" style="margin-top: 25px;">Bio</label>
+            <textarea name="bio" rows="2" placeholder="Descreva sua vibe em poucas palavras..." class="glass-input" style="resize: none;"></textarea>
+
+            <label class="field-tag" style="margin-top: 25px;">Interesses</label>
+            <div class="chips-wrapper">
+                {% for interest in interests %}
+                <div class="modern-chip" onclick="selectChip(this)">{{ interest }}</div>
+                {% endfor %}
+            </div>
+
+            <input type="hidden" name="interests" id="final_interests">
+            
+            <button type="submit" id="submit-btn" class="diamond-btn" disabled>
+                Sincronizar Perfil
+            </button>
+        </form>
+    </div>
+</div>
+
+<style>
+    /* DESIGN SYSTEM SYNCORA DIAMOND */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 24px;
+    }
+
+    .identity-badge {
+        width: 80px; height: 80px; background: rgba(29, 185, 84, 0.1); 
+        border-radius: 28px; display: flex; align-items: center; justify-content: center;
+        margin-bottom: 25px; border: 1px solid rgba(29, 185, 84, 0.2);
+    }
+
+    .upload-zone {
+        width: 100%; height: 240px; position: relative; overflow: hidden;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .upload-zone:active { transform: scale(0.98); }
+
+    .hidden-input { position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; }
+
+    #scanner-effect {
+        display: none; position: absolute; top: 0; width: 100%; height: 4px;
+        background: linear-gradient(to right, transparent, #1db954, transparent);
+        box-shadow: 0 0 20px #1db954; animation: scanMove 2.5s infinite linear;
+    }
+
+    .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 120px); gap: 12px; margin-bottom: 35px; }
+    .photo-card.main-slot { grid-column: span 2; grid-row: span 2; height: 252px; }
+    .photo-card { position: relative; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+    .photo-card img { width: 100%; height: 100%; object-fit: cover; display: none; position: absolute; border-radius: 24px; }
+    .plus-btn { font-size: 30px; color: #1db954; font-weight: 300; }
+
+    .field-tag { font-size: 10px; font-weight: 900; color: #444; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; display: block; }
+    
+    .input-group { display: flex; gap: 15px; }
+    .glass-input {
+        width: 100%; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 16px; padding: 18px; color: white; font-size: 15px; transition: 0.3s;
+    }
+    .glass-input:focus { border-color: #1db954; background: rgba(29, 185, 84, 0.05); outline: none; }
+
+    .chips-wrapper { display: flex; flex-wrap: wrap; gap: 10px; }
+    .modern-chip {
+        padding: 12px 20px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 50px; font-size: 12px; font-weight: 700; color: #777; cursor: pointer; transition: 0.3s;
+    }
+    .modern-chip.selected { background: #1db954; color: black; border-color: #1db954; transform: scale(1.05); box-shadow: 0 10px 20px rgba(29, 185, 84, 0.2); }
+
+    .diamond-btn {
+        width: 100%; padding: 24px; background: #1db954; color: black; border: none;
+        border-radius: 50px; font-weight: 900; font-size: 16px; text-transform: uppercase;
+        letter-spacing: 2px; margin-top: 50px; cursor: pointer; transition: 0.4s;
+    }
+    .diamond-btn:disabled { background: #1a1a1a; color: #333; cursor: not-allowed; }
+    .diamond-btn:not(:disabled):hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(29, 185, 84, 0.3); }
+
+    /* ANIMATIONS */
+    @keyframes scanMove { 0% { top: 0; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .pulse-loader {
+        width: 20px; height: 20px; background: #1db954; border-radius: 50%; margin: 0 auto;
+        animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse { 0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(29, 185, 84, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 15px rgba(29, 185, 84, 0); } 100% { transform: scale(0.9); } }
+</style>
+
+<script>
+    function processID(input) {
+        if (input.files && input.files[0]) {
+            document.getElementById('upload-label').innerText = "Processando Dados...";
+            document.getElementById('scanner-effect').style.display = 'block';
+            document.getElementById('ia-status-container').style.display = 'block';
+            document.getElementById('drop-zone').style.borderColor = '#1db954';
+
+            setTimeout(() => {
+                document.getElementById('step-id-verification').style.animation = "fadeIn 0.5s reverse forwards";
+                setTimeout(() => {
+                    document.getElementById('step-id-verification').style.display = 'none';
+                    document.getElementById('step-profile-edit').style.display = 'block';
+                    document.getElementById('step-profile-edit').style.animation = "fadeIn 0.8s ease";
+                }, 500);
+            }, 3500);
+        }
+    }
+
+    function imgPreview(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = input.nextElementSibling;
+                img.src = e.target.result;
+                img.style.display = 'block';
+                input.parentElement.style.border = "1px solid #1db954";
+                if(input.name === 'p1') document.getElementById('submit-btn').disabled = false;
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    let picked = [];
+    function selectChip(el) {
+        const val = el.innerText;
+        if (el.classList.contains('selected')) {
+            el.classList.remove('selected');
+            picked = picked.filter(i => i !== val);
+        } else if (picked.length < 5) {
+            el.classList.add('selected');
+            picked.push(val);
+        }
+        document.getElementById('final_interests').value = picked.join(',');
+    }
+</script>
+{% endblock %}

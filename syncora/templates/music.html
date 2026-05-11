@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="padding: 30px; display: flex; flex-direction: column; height: 100%; justify-content: space-between; background: radial-gradient(circle at bottom, rgba(29, 185, 84, 0.15) 0%, rgba(0,0,0,1) 80%);">
+    
+    <header style="text-align: center; margin-top: 20px; animation: fadeIn 1s ease;">
+        <p style="color: #1db954; font-weight: 900; font-size: 11px; letter-spacing: 4px; text-transform: uppercase; opacity: 0.8;">Sincronização</p>
+    </header>
+
+    <div style="text-align: center; flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">
+        
+        {% if user.music != "Starboy" and user.music != "Nenhuma música tocando" and user.music != "Silêncio..." and user.music != "Abra o Spotify" %}
+            
+            <div style="position: relative; width: 280px; height: 280px; margin: 0 auto 35px; border-radius: 40px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.8); animation: scaleIn 0.6s cubic-bezier(0.23, 1, 0.32, 1);">
+                <img src="{{ user.photo }}" style="width: 100%; height: 100%; object-fit: cover;" alt="Capa do Álbum">
+                <div style="position: absolute; bottom: 0; width: 100%; height: 60%; background: linear-gradient(transparent, rgba(0,0,0,0.9));"></div>
+                <div style="position: absolute; top: 20px; right: 20px; background: rgba(29, 185, 84, 0.9); padding: 5px 12px; border-radius: 20px; font-size: 10px; font-weight: 900; color: black; letter-spacing: 1px;">LIVE</div>
+            </div>
+
+            <h1 style="font-size: 32px; font-weight: 900; color: white; margin-bottom: 8px; letter-spacing: -1.5px; animation: fadeInUp 0.8s ease;">{{ user.music }}</h1>
+            <p style="color: #1db954; font-size: 20px; font-weight: 700; margin-bottom: 20px; animation: fadeInUp 1s ease;">{{ user.artist }}</p>
+            
+            <div style="display: flex; justify-content: center; gap: 4px; height: 20px; align-items: flex-end;">
+                <div class="bar" style="animation-duration: 0.5s;"></div>
+                <div class="bar" style="animation-duration: 0.8s;"></div>
+                <div class="bar" style="animation-duration: 0.6s;"></div>
+                <div class="bar" style="animation-duration: 0.7s;"></div>
+                <div class="bar" style="animation-duration: 0.5s;"></div>
+            </div>
+
+        {% else %}
+
+            <div style="width: 240px; height: 240px; margin: 0 auto 40px; position: relative; display: flex; align-items: center; justify-content: center;">
+                <div class="pulse-ring"></div>
+                <div class="pulse-ring" style="animation-delay: 1s;"></div>
+                
+                <div style="width: 120px; height: 120px; background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 2;">
+                    <span style="font-size: 45px; filter: drop-shadow(0 0 10px rgba(29, 185, 84, 0.5));">🎧</span>
+                </div>
+            </div>
+
+            <h1 style="font-size: 34px; font-weight: 900; color: white; margin-bottom: 20px; letter-spacing: -1.5px; line-height: 1.1; padding: 0 10px;">O silêncio diz muito, mas a sua música diz tudo.</h1>
+            <p style="color: #777; font-size: 16px; line-height: 1.6; padding: 0 30px; font-weight: 500;">Dê o play no Spotify e deixe o mundo saber qual é a trilha sonora da sua vida agora.</p>
+            
+            <div style="margin-top: 40px; color: #1db954; font-weight: 900; font-size: 11px; text-transform: uppercase; letter-spacing: 3px; animation: blink 2s infinite;">
+                Aguardando sua frequência
+            </div>
+
+        {% endif %}
+    </div>
+
+    <div style="margin-bottom: 30px; animation: fadeInUp 1.2s ease;">
+        <form action="/radar" method="POST">
+            <input type="hidden" name="name" value="{{ user.name }}">
+            <input type="hidden" name="music" value="{{ user.music }}">
+            
+            <button type="submit" class="diamond-btn" 
+                {% if user.music == "Silêncio..." or user.music == "Abra o Spotify" or user.music == "Starboy" %} 
+                disabled style="opacity: 0.3; cursor: not-allowed; filter: grayscale(1);" 
+                {% endif %}>
+                Buscar Conexões
+            </button>
+        </form>
+        <p style="text-align: center; color: #333; font-size: 11px; margin-top: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+            Raio de alcance: 10km ativo
+        </p>
+    </div>
+
+</div>
+
+<style>
+    /* BOTÃO PREMIUM */
+    .diamond-btn {
+        width: 100%; padding: 24px; background: #1db954; color: black; border: none;
+        border-radius: 50px; font-weight: 900; font-size: 16px; text-transform: uppercase;
+        letter-spacing: 2px; cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 0 15px 35px rgba(29, 185, 84, 0.25);
+    }
+    .diamond-btn:not(:disabled):hover { transform: translateY(-5px); box-shadow: 0 20px 45px rgba(29, 185, 84, 0.4); }
+    .diamond-btn:active { transform: scale(0.98); }
+
+    /* ANIMAÇÕES */
+    @keyframes scaleIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    /* PULSO DO SILÊNCIO */
+    .pulse-ring {
+        position: absolute; width: 100%; height: 100%; border: 1px solid rgba(29, 185, 84, 0.3);
+        border-radius: 50%; animation: pulse-anim 3s infinite;
+    }
+    @keyframes pulse-anim {
+        0% { transform: scale(0.5); opacity: 1; }
+        100% { transform: scale(1.2); opacity: 0; }
+    }
+
+    /* BARRAS DO VISUALIZER */
+    .bar { width: 4px; background: #1db954; border-radius: 2px; animation: barGrow 0.5s infinite alternate ease-in-out; }
+    @keyframes barGrow { from { height: 5px; } to { height: 20px; } }
+</style>
+{% endblock %}
